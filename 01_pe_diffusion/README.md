@@ -1,87 +1,72 @@
 # 01: PE diffusion model (MAISI ControlNet)
 
-This folder trains and runs the PE generator. The generator is built on NVIDIA MAISI
+This folder runs and trains the PE generator. The generator is built on NVIDIA MAISI
 (`maisi3d-rflow`, a 3D latent diffusion model with a rectified-flow scheduler). It makes a CT
 pulmonary angiogram (CTPA) from a segmentation label map and a text prompt. We fine-tuned the
 text-conditioned diffusion U-Net and the ControlNet. The MAISI autoencoder is used as is.
 
-`fidelity/` holds the scripts for the fidelity metrics of Extended Data Table 1 (2.5D FID and
-BiomedCLIP CLIPScore). The counterfactual label maps come from
-[`../03_counterfactual_masks/`](../03_counterfactual_masks/).
-
 ## What you need
+
+A GPU and three sets of weights:
+
+| Weights | Source | Local path used below |
+|---|---|---|
+| Fine-tuned U-Net and ControlNet | HuggingFace, `<HF_URL>` (link to be added): `models/pe/diffusion_unet.pt`, `models/pe/controlnet.pt` | `../weights/pe/` |
+| MAISI autoencoder | [`nvidia/NV-Generate-CT`](https://huggingface.co/nvidia/NV-Generate-CT), file `models/autoencoder_v1.pt` | `../weights/models/autoencoder_v1.pt` |
+| ClinicalT5-base text encoder | `luqh/ClinicalT5-base` on HuggingFace, converted to PyTorch by `scripts/convert_t5.py` | `CF_CLINICALT5` |
 
 ```bash
 cd 01_pe_diffusion                       # run every command from this folder
 pip install -r requirements.txt          # the GPU steps of the paper ran with Python 3.11
 export PYTHONPATH=$(pwd):$(pwd)/scripts:$PYTHONPATH
+huggingface-cli download nvidia/NV-Generate-CT models/autoencoder_v1.pt --local-dir ../weights
+export CF_CLINICALT5=$(pwd)/../weights/clinicalt5-pytorch
+python scripts/convert_t5.py             # once; writes the PyTorch copy to $CF_CLINICALT5
 ```
 
-The generator needs a GPU.
+## Generate a CT
 
-| Item | Where to get it | How the code finds it |
-|---|---|---|
-| Fine-tuned U-Net and ControlNet | HuggingFace (`<HF_URL>`, link to be added): `models/pe/diffusion_unet.pt`, `models/pe/controlnet.pt` | paths in the environment JSON |
-| MAISI autoencoder | [`nvidia/NV-Generate-CT`](https://huggingface.co/nvidia/NV-Generate-CT), file `models/autoencoder_v1.pt` | path in the environment JSON |
-| ClinicalT5-base | `luqh/ClinicalT5-base` on HuggingFace; make a PyTorch copy with `python scripts/convert_t5.py` | `CF_CLINICALT5` |
-| nnU-Net PE detector (PE-Detector-1) | from its authors (see the paper) | `CF_NNUNET_RESULTS` (the `nnUNet_results` folder), `CF_NNUNET_INPUT` (used as `nnUNet_raw` and `nnUNet_preprocessed`) |
-| Conditioning masks | HuggingFace: `dataset/pe/conditioning_masks/` | datalist JSON |
-| Training and fidelity data (INSPECT CTPA, impressions, generated test scans) | not released | `CF_RAW` |
-
-The training scripts log to Weights & Biases (`WANDB_API_KEY`). Radiology impressions are not
-released, so you write the `text_prompt` of each datalist entry yourself. The released models
-use this format (placeholders only):
-
-```
-"<age> year old <race> <sex>. IMPRESSION: 1. <finding>."
-```
-
-## Generate a CT from a released conditioning mask
-
-1. Write a datalist JSON, for example `my_datalist.json`:
-
-```json
-{"test": [
-  {"image_id": "<cf_id>",
-   "segmentation": "pe/conditioning_masks/<cf_id>.nii.gz",
-   "embedding": "pe/conditioning_masks/<cf_id>.nii.gz",
-   "dim": [<nx>, <ny>, <nz>],
-   "spacing": [<sx>, <sy>, <sz>],
-   "pe_status": 1,
-   "text_prompt": "<age> year old <race> <sex>. IMPRESSION: 1. <finding>."}
-]}
-```
-
-   `dim` is the mask shape and `spacing` is its voxel size in mm, from the NIfTI header. The
-   paths are relative to `data_base_dir`.
-
-2. Edit `configs/environment_maisi_controlnet_inference_demo.json`: the three weight paths,
-   `data_base_dir` (your local `dataset/` folder), `json_data_list` and `output_dir`.
-3. Run:
+The example in [`../examples/pe/`](../examples/) is a conditioning mask made from open data,
+with a short synthetic prompt:
 
 ```bash
-# one GPU
 python scripts/infer_controlnet.py -g 1 \
-  -e ./configs/environment_maisi_controlnet_inference_demo.json \
-  -t ./configs/config_maisi_controlnet_train.json
-# several GPUs
-torchrun --nproc_per_node=4 scripts/infer_controlnet.py -g 4 --skip-existing \
-  -e ./configs/environment_maisi_controlnet_inference_demo.json \
+  -e ../examples/pe/environment.json \
   -t ./configs/config_maisi_controlnet_train.json
 ```
 
-Outputs in `output_dir`:
+It takes about one minute on one NVIDIA L40 and writes to `../examples/pe/output/`:
 
-- `<image_id>_pred_<time>_image.nii.gz`: the generated CT.
-- `<image_id>_pred_<time>_label.nii.gz`: the label map resized to `dim` (the generator input).
-- `<image_id>_pred_<time>_pe_seg.nii.gz`: the nnU-Net PE detector output (only with `pe_status` = 1).
+- `example_pe_pred_<time>_image.nii.gz`: the generated CT (512 x 512 x 256 voxels).
+- `example_pe_pred_<time>_label.nii.gz`: the label map on the grid of the CT.
 
-To match the paper's counterfactual run, set `autoencoder_sliding_window_infer_overlap` to
-0.67 in the `-t` file (it is 0.4 in the shipped file).
+To generate from your own masks, or from the released masks
+(`dataset/pe/conditioning_masks/` on HuggingFace), write a datalist like
+`../examples/pe/datalist.json` and point `json_data_list`, `data_base_dir` and `output_dir`
+of the environment file to it. Each entry has:
 
-## Train the models
+- `segmentation`: the label map (labels in Details), relative to `data_base_dir`. `embedding`
+  is read but not used; set it to the same file.
+- `dim` and `spacing`: the size and voxel size (mm) of the CT to generate. The label map is
+  resized to `dim`.
+- `text_prompt`: the released models were trained with
+  `"<age> year old <race> <sex>. IMPRESSION: 1. <finding>."`.
+- `pe_status`: with 1, the script also runs PE-Detector-1 on the generated CT and writes
+  `<image_id>_pred_<time>_pe_seg.nii.gz`. This needs the
+  [detector weights](https://github.com/mazurowski-lab/PulmonaryEmbolismSegmentation)
+  (`CF_NNUNET_RESULTS` = its `nnUNet_results` folder, `CF_NNUNET_INPUT` = a scratch folder).
 
-The training data are not released. These steps show how the released models were made.
+For several GPUs use `torchrun --nproc_per_node=4 scripts/infer_controlnet.py -g 4 --skip-existing`
+with the same `-e` and `-t` options. To match the paper's counterfactual run, set
+`autoencoder_sliding_window_infer_overlap` to 0.67 in the `-t` file (it is 0.4 in the shipped
+file).
+
+<details><summary>Train</summary>
+
+The models were trained on the INSPECT CTPA scans and report impressions. We do not redistribute
+INSPECT. You can request it from its source:
+[INSPECT dataset page](https://aimi.stanford.edu/datasets/inspect-Multimodal-Dataset-for-Pulmonary-Embolism-Diagnosis-and-Prognosis).
+Put the scans under `$CF_RAW/CTPA/`. These steps show how the released models were made.
 
 ```bash
 # 1. ClinicalT5 PyTorch copy
@@ -115,7 +100,9 @@ python scripts/qc_generated_scans.py --pred-dir <output_dir> --output-csv qc_res
 
 Edit the paths in the environment JSON files before each step.
 
-## Fidelity metrics (Extended Data Table 1)
+</details>
+
+<details><summary>Fidelity metrics (Extended Data Table 1)</summary>
 
 The inputs (real test CTs, generated test scans, prompts) are not released. Submit the `sbatch`
 scripts from this folder after `mkdir -p fidelity/logs`.
@@ -137,6 +124,8 @@ sbatch --array=0-3 fidelity/run_fid_bootstrap.sh
 python fidelity/fid_bootstrap_combine.py
 ```
 
+</details>
+
 <details><summary>Details</summary>
 
 **Released checkpoints.** U-Net: lowest-training-loss checkpoint, `epoch` = 193 (`n_epochs` =
@@ -153,7 +142,7 @@ ClinicalT5 directly with `from_flax=True`. `infer_controlnet.py` loads the detec
 ResNet-50 weights at `$CF_RAW/pe_training_data_all/models/ResNet50.pt`. BiomedCLIP is loaded
 from the HuggingFace hub.
 
-**`CF_RAW` layout.** `$CF_RAW/CTPA/<image_id>.nii.gz` (INSPECT CTPA) and
+**`CF_RAW` layout** (training and fidelity only). `$CF_RAW/CTPA/<image_id>.nii.gz` (INSPECT CTPA) and
 `$CF_RAW/pe_training_data_all/` (label CSVs, embeddings, generated test scans, FID features).
 
 **Labels** (`configs/label_dict_inspect.json`, 0 is background): 1 to 118 are the
@@ -173,9 +162,10 @@ receives the label map as an 8-channel bit-plane encoding. Its loss weights labe
 the mask. Settings come from the `controlnet_infer` block of the `-t` file: 30 steps and an
 80 x 80 x 80 decoding window. The CT and the saved label have the affine of the generated grid:
 the affine of the input label map with each axis scaled by (label size / `dim`). The released
-scans were made before this fix; their headers were corrected in the released dataset. On NFS,
-the nnU-Net clean-up can print `OSError: Device or resource busy`; the outputs are still
-written.
+scans were made before this fix; their headers were corrected in the released dataset. With
+`pe_status` = 1 the script loads the detector from `CF_NNUNET_RESULTS` at the first such entry.
+On NFS, the nnU-Net clean-up can print `OSError: Device or resource busy`; the outputs are
+still written.
 
 **Training.** Step 3 reads `Final_Impressions_labels.csv` and `Final_Impressions.csv` in
 `$CF_RAW/pe_training_data_all/`. Step 4 runs the TotalSegmentator `lung_vessels` task; the

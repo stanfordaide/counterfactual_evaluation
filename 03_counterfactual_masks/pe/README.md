@@ -12,7 +12,7 @@ PE-negative CTPA -> Phase 1: vessel tree -> Phase 2: 16-config grid -> Phase 3: 
 
 The masks and generated CTs of the paper are on HuggingFace (`<HF_URL>`, link to be added). You do not need this code to use them.
 
-To run the code you need data that is not part of this release: the INSPECT CTPA scans, their TotalSegmentator masks and their report impressions. Everything runs on a CPU.
+To run the code you need the INSPECT CTPA scans, their TotalSegmentator masks and their report impressions. We do not redistribute INSPECT; request it from the [INSPECT dataset page](https://aimi.stanford.edu/datasets/inspect-Multimodal-Dataset-for-Pulmonary-Embolism-Diagnosis-and-Prognosis). Everything runs on a CPU.
 
 | Variable | Used for | Default |
 |----------|----------|---------|
@@ -64,19 +64,11 @@ python phase6_evaluation/run_vessel_overlay_apes.py --aggregate-only --output-di
 | 1 | `phase5_cohort_assembly/output/selected_patient_ids.txt` (and `selected_patients.csv`, `selected_patients_full.json`) |
 | 2 | `phase5_cohort_assembly/output/patients/{id}/`: vessel graph (`phase1/`), configuration grid (`phase2/`), PE masks `{config_id}_pe_mask.nii.gz` and merged label maps `{config_id}_combined_seg.nii.gz` (`phase3/`), validation report and QC images (`phase4/`), `impressions.json` |
 | 3 | `phase5_cohort_assembly/output/master_metadata.csv` and `counterfactual_datalist.json` (the datalist for `01_pe_diffusion`) |
-| 4 | Four tables under `phase6_evaluation/`: `output/evaluation_all_configs.csv` and `output/vessel_overlay/vessel_overlay_all_configs.csv` (PE-Detector-1), and the same two under `output_apes/` (PE-Detector-2) |
+| 4 | Four tables under `phase6_evaluation/`: `output/evaluation_all_configs.csv` and `output/vessel_overlay/vessel_overlay_all_configs.csv` ([PE-Detector-1](https://github.com/mazurowski-lab/PulmonaryEmbolismSegmentation)), and the same two under `output_apes/` ([PE-Detector-2](https://github.com/AIinMedicalApplications/APES_ThrombusSegmenter)) |
 
 The files of steps 1 to 3 that hold report text or demographics are not released (`counterfactual_datalist.json`, `selected_patients*`, `impressions.json`, and the `text_prompt`, age, sex and race columns of `master_metadata.csv`).
 
 The analysis in `04_evaluation_and_analysis` reads a reduced copy of the four tables of step 4 from `resources/cohort/`: `evaluation_all_configs{,_apes}.csv` and `vessel_overlay_all_configs{,_apes}.csv` (see the resources section of `04_evaluation_and_analysis/README.md`). The `error` column (`no_intended_pe`, `missing_label`, `missing_pe_seg`) marks configurations that cannot be scored.
-
-## Cohort used in the paper
-
-- 150 PE-negative INSPECT test patients were selected (75 per sex, age-matched).
-- 2,388 configurations were generated. 2,359 passed the four automated checks (`master_metadata.csv`, column `all_checks_pass`).
-- 12 configurations were excluded: the label file was missing (1) or the PE-Detector-1 output was missing (11).
-- Final cohort: 2,347 counterfactuals from 150 patients (`final_cohort.csv`, built by `04_evaluation_and_analysis/analysis_data/make_final_cohort.py`).
-- Location (most proximal embolus): lobar 37%, subsegmental 31%, segmental 25%, central 6%. Severity: mild 76%, moderate 15%, severe 9%. Acute morphology 56%, chronic 44%. Median intended embolus volume 0.50 mL.
 
 <details><summary>Details</summary>
 
@@ -127,7 +119,7 @@ The released masks were made with an earlier version of this code that defined t
 
 **Phase 5: cohort assembly (`phase5_cohort_assembly/`).** `select_patients.py` selects the PE-negative patients: true negatives of a PE classifier, vessel QC (at least 5,000 vessel voxels), optional lobe QC (`--run-lobe-qc`: at least 4 lobes with at least 2 mL of vessels), 75 per sex, age-matched. `run_single_patient.py` runs phases 1-4 for one patient, with retries, and writes the impression text: `impression_generator.py` replaces the "no PE" statement of the source impression with a template sentence for the inserted PE.
 
-Retries: if fewer than 16 configurations pass, `generate_replacement_configs` (Phase 2) makes replacement configurations, for up to 3 rounds. A replacement keeps the location, burden and occlusion of the failed configuration and uses edges in a different lobe, drawn from the larger half of the candidate edges. Round 2 raises the occlusion one level. Round 3 also changes an isolated burden to multi-unilateral (3 edges). Replacements are always chronic (eccentric fill): the code does not pass the `acute` flag, so the default `acute=False` applies. In the paper cohort, the 23 counterfactuals numbered above `cf016` are all chronic.
+Retries: if fewer than 16 configurations pass, `generate_replacement_configs` (Phase 2) makes replacement configurations, for up to 3 rounds. A replacement keeps the location, burden and occlusion of the failed configuration and uses edges in a different lobe, drawn from the larger half of the candidate edges. Round 2 raises the occlusion one level. Round 3 also changes an isolated burden to multi-unilateral (3 edges). Replacements are always chronic (eccentric fill): the code does not pass the `acute` flag, so the default `acute=False` applies.
 
 **Phase 6: evaluation (`phase6_evaluation/`)**
 

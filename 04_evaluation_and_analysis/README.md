@@ -8,7 +8,12 @@ This folder computes every number of the paper. It holds two kinds of code:
   masks and writes the detection tables. These steps need CT volumes, masks or detector
   predictions. Their outputs are in `../resources/`, so every statistic runs without them.
 
-The detector models and the scripts that draw the paper figures are not included.
+The detector models are not included. They are open-weight models:
+[PE-Detector-1](https://github.com/mazurowski-lab/PulmonaryEmbolismSegmentation),
+[PE-Detector-2](https://github.com/AIinMedicalApplications/APES_ThrombusSegmenter),
+[ICH-Detector-1](https://github.com/samleoqh/Viola-Unet),
+[ICH-Detector-2](https://github.com/stanfordaide/ICH_EMM).
+The scripts that draw the paper figures are not included.
 
 ## What you need
 
@@ -151,7 +156,7 @@ IDs: PE patients keep their INSPECT ids (`PE...`); a PE counterfactual is `confi
 ids map to sorted release ids). An ICH counterfactual is `cf_id` = `<patient>_<ich_idx>`, where
 `ich_idx` (1 to 165) is the donor hemorrhage mask. Its `image` is `<cf_id>__<suffix>`: the
 suffix holds the donor dataset, subtype codes and volume (for example
-`ICH001_162__SU300_IPH_1.26ml.nii.gz`; `SU300` marks the 91 donor masks derived from expert
+`ICH001_162__SU300_IPH_1.26ml.nii.gz`; `SU300` marks the donor masks derived from expert
 annotations, see `../03_counterfactual_masks/ich/README.md`). Subtypes are parsed from it with
 the regular expression `(SDH|EDH|SAH|IPH|IVH)`. Radiologist ICH scans are
 `<patient>_read_study_<k>`; `k = 0` is the synthetic scan without hemorrhage.

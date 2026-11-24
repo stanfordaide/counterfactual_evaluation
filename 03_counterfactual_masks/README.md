@@ -4,15 +4,15 @@ This folder makes the conditioning masks from which the diffusion models generat
 counterfactual CTs. Each mask keeps the anatomy segmentation of a real disease-free scan and
 adds one lesion.
 
-| Folder | Disease | Method | Used in the paper |
-|--------|---------|--------|-------------------|
-| [`pe/`](pe/) | Pulmonary embolism | Emboli placed in the pulmonary arterial tree of a PE-negative CTPA, on a grid of 16 configurations per patient (location, occlusion, burden, acute or chronic morphology), with four automated checks | 2,347 counterfactuals from 150 patients |
-| [`ich/`](ich/) | Intracranial hemorrhage | A donor hemorrhage mask moved into the segmentation of an ICH-negative head CT by rigid skull registration, then clipped to the brain | 2,601 counterfactuals from 150 patients |
+| Folder | Disease | Method |
+|--------|---------|--------|
+| [`pe/`](pe/) | Pulmonary embolism | Emboli placed in the pulmonary arterial tree of a PE-negative CTPA, on a grid of 16 configurations per patient (location, occlusion, burden, acute or chronic morphology), with four automated checks |
+| [`ich/`](ich/) | Intracranial hemorrhage | A donor hemorrhage mask moved into the segmentation of an ICH-negative head CT by rigid skull registration, then clipped to the brain |
 
 What you need: the conditioning masks used in the paper are on HuggingFace (`<HF_URL>`, link to
-be added), so this code is needed only to rebuild them or to make new ones. Both pipelines
-read private source data (scans, segmentations, report impressions) that is not part of this
-release. All code here runs on a CPU. Each subfolder has its own `README.md` with the commands,
+be added), so this code is needed only to rebuild them or to make new ones. The PE pipeline reads INSPECT scans, segmentations and report impressions
+([INSPECT dataset page](https://aimi.stanford.edu/datasets/inspect-Multimodal-Dataset-for-Pulmonary-Embolism-Diagnosis-and-Prognosis)).
+The ICH pipeline reads internal head CT data that are not public. All code here runs on a CPU. Each subfolder has its own `README.md` with the commands,
 and its own `requirements.txt`.
 
 The PE folder also holds the Phase 6 evaluation scripts. They compare the PE-detector output on

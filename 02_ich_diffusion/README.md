@@ -1,48 +1,63 @@
 # 02 ICH diffusion model
 
-This folder trains and runs the head CT generator for intracranial hemorrhage (ICH). The
+This folder runs and trains the head CT generator for intracranial hemorrhage (ICH). The
 generator is a fine-tuned MAISI model (3D latent diffusion for CT, rectified-flow version).
 It makes a non-contrast head CT from a segmentation label map (head anatomy plus the
-hemorrhage, label 66) and a text prompt (demographic prefix plus a report impression). The
-prompt is encoded by a frozen ClinicalT5-base encoder. The MAISI VAE is not retrained.
-
-The counterfactual label maps and prompts come from
-[`../03_counterfactual_masks/ich/`](../03_counterfactual_masks/ich/).
+hemorrhage, label 66) and a text prompt. The prompt is encoded by a frozen ClinicalT5-base
+encoder. The MAISI VAE is not retrained.
 
 ## What you need
+
+A GPU and three sets of weights:
+
+| Weights | Source | Local path used below |
+|---|---|---|
+| Fine-tuned U-Net and ControlNet | HuggingFace, `<HF_URL>` (link to be added): `models/ich/diffusion_unet.pt`, `models/ich/controlnet.pt` | `../weights/ich/` |
+| MAISI VAE (same file for PE and ICH) | [`nvidia/NV-Generate-CT`](https://huggingface.co/nvidia/NV-Generate-CT), file `models/autoencoder_v1.pt` | `../weights/models/autoencoder_v1.pt` |
+| ClinicalT5-base text encoder | `luqh/ClinicalT5-base` on HuggingFace, converted to PyTorch by `../01_pe_diffusion/scripts/convert_t5.py` | `CF_CLINICALT5` |
 
 ```bash
 cd 02_ich_diffusion                      # run every command from this folder
 pip install -r requirements.txt
 export PYTHONPATH=$(pwd):$(pwd)/scripts:$PYTHONPATH
-export CF_CLINICALT5=/path/to/ClinicalT5-base/model              # T5 encoder weights (same checkpoint as PE)
-export CF_CLINICALT5_TOKENIZER=/path/to/ClinicalT5-base/tokenizer  # tokenizer files (spiece.model)
-export WANDB_API_KEY=...                                         # training only (Weights & Biases)
+huggingface-cli download nvidia/NV-Generate-CT models/autoencoder_v1.pt --local-dir ../weights
+export CF_CLINICALT5=$(pwd)/../weights/clinicalt5-pytorch
+python ../01_pe_diffusion/scripts/convert_t5.py    # once; writes the PyTorch copy to $CF_CLINICALT5
+export CF_CLINICALT5_TOKENIZER=luqh/ClinicalT5-base
 ```
 
-A GPU is needed. To generate scans without training, download the weights and use only step 8:
+## Generate a head CT
 
-| File | Content |
-|---|---|
-| `models/ich/diffusion_unet.pt` (HuggingFace, `<HF_URL>`, link to be added) | ICH diffusion U-Net |
-| `models/ich/controlnet.pt` (HuggingFace) | ICH ControlNet |
-| `models/autoencoder_v1.pt` from [`nvidia/NV-Generate-CT`](https://huggingface.co/nvidia/NV-Generate-CT) | MAISI VAE, same file for PE and ICH |
+Write a datalist and an environment file (format below), then:
 
-The training data are internal head CT studies and their report impressions. The scans, the
-reports, the text prompts and the datalists are not released. The prompt format is
-(placeholders only):
-
-```
-<AGE> years old <race> <sex>. IMPRESSION:<impression text>
+```bash
+python scripts/infer_controlnet_headct_infer_embed_then_decode.py -e <your_environment.json>
 ```
 
-Every path in `configs/` is a `/path/to/...` placeholder. Edit the paths before you run. The
-data-preparation scripts (steps 1 to 5) have their paths at the top of the file or as
+One scan takes about two minutes on one NVIDIA L40. The script writes to `output_dir`:
+
+- `embeddings/`: the latent (`*_image_embed.nii.gz`) and the label map resized to `dim` (`*_label.nii.gz`).
+- `decoded_images/<image>_pred_<time>_image_embed_decoded.nii.gz`: the generated CT (int16, HU, 512 x 512 x 512 voxels).
+
+The environment file sets `output_dir`, the three weight paths (`trained_autoencoder_path`,
+`trained_diffusion_path`, `trained_controlnet_path`), `data_base_dir` and `json_data_list`. Each entry
+needs `image` (used for the output name), `segmentation` (the label map; labels in Details),
+`embedding` (any readable NIfTI; loaded but not used), `dim`, `spacing` and `text_prompt`.
+The models were trained with prompts of the form
+`<AGE> years old <race> <sex>. IMPRESSION:<impression text>`. The datalist written by
+`../03_counterfactual_masks/ich/prepare_controlnet_input.py` has this format.
+
+The decoding pass reads every `*_image_embed.nii.gz` file in `<output_dir>/embeddings/`, so use
+a new `output_dir` for each run.
+
+The code that de-faces the released head CTs will be added to this repository.
+
+<details><summary>Train</summary>
+
+The training data are internal head CT studies and their report impressions. They are not
+public. Every path in `configs/` is a `/path/to/...` placeholder; edit the paths before you
+run. The data-preparation scripts (steps 1 to 5) have their paths at the top of the file or as
 command-line defaults.
-
-## Run
-
-Steps 1 to 7 build the training data and train the two models. Step 8 generates head CTs.
 
 ```bash
 # 1. List the CT volumes: writes ich_training_data_all.json next to the input table
@@ -79,31 +94,18 @@ torchrun --standalone --nproc_per_node=<N> scripts/train_diff_model_train_text_h
 # 7. Fine-tune the ControlNet with the U-Net frozen:
 #    writes <model_dir>/weighted_loss_10.0/<exp_name>_epoch_<k>.pt and <exp_name>_best.pt
 torchrun --nproc_per_node=<N> scripts/train_controlnet_seg_text_headct.py --gpus <N>
-
-# 8. Generate head CTs (one GPU)
-python scripts/infer_controlnet_headct_infer_embed_then_decode.py
 ```
 
-For step 8, set `json_data_list` in the inference environment file to the test-set datalist
-or to the counterfactual datalist from `../03_counterfactual_masks/ich/`. Each entry needs
-`image` (used for the output name), `embedding` (any readable NIfTI; loaded but not used),
-`segmentation`, `dim`, `spacing` and `text_prompt`.
+Then generate with the new weights as shown above.
 
-Outputs of step 8:
-
-- `<output_dir>/embeddings/`: latents and the label maps resized to `dim` (the generator input).
-- `<output_dir>/decoded_images/*_image_embed_decoded.nii.gz`: the CTs (int16, HU).
-
-The decoding pass reads every `*_image_embed.nii.gz` file in `<output_dir>/embeddings/`, so use
-a new `output_dir` for each run.
-
-The code that de-faces the released head CTs will be added to this repository.
+</details>
 
 <details><summary>Details</summary>
 
 **Environment.** `requirements.txt` installs the environment of `../01_pe_diffusion/` (which
 includes TotalSegmentator) and adds `sentencepiece` for `T5Tokenizer`. The TotalSegmentator
-`brain_structures` task needs a license key. Set `WANDB_ENTITY` to choose the W&B entity.
+`brain_structures` task needs a license key. The training scripts log to Weights & Biases
+(`WANDB_API_KEY`; `WANDB_ENTITY` chooses the entity).
 
 **Released checkpoints.** U-Net: lowest-training-loss checkpoint (epoch 144); the run used a
 200-epoch schedule and stopped after epoch 154. ControlNet: lowest-training-loss checkpoint

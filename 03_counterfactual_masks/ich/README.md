@@ -61,13 +61,9 @@ Outputs: step 1 writes one counterfactual mask (uint16, ICH = label 66) per pair
 
 Paths are opened as written, so give absolute paths or run from the folder they are relative to. `prepare_controlnet_input.py` reads the source id from the file name of `src_healthy_seg_path` and the donor index from the file name of `src_ich_seg_path`.
 
-## Data used in the paper
-
-- Source anatomy: 150 ICH-negative head CTs. Each segmentation is the merge of the TotalSegmentator `brain_structures` and `craniofacial_structures` outputs (`02_ich_diffusion/scripts/merge_total_segmentator_labels_headct_batch.py`).
-- Donor library: 165 hemorrhage masks. The `dataset` value `SU300` marks the 91 masks that, in the words of the paper, "were derived from expert annotations". The paper continues: "The remaining 74 masks were obtained via automated segmentation [42], including 41 cases from the internal Stanford head CT dataset and 33 from the RSNA intracranial hemorrhage dataset" (`dataset` values `Stanford` and `RSNA`; both TotalSegmentator `cerebral_bleed`). Each donor also has its merged anatomy segmentation, used only for the skull registration.
-- Pairs: each donor was pasted into 16 source scans (165 x 16 = 2,640 pairs). Each source scan received 17 or 18 donors. 2,601 of the 2,640 counterfactual masks have an ICH volume above 0 mL. These 2,601 form the evaluation cohort. The step that drew the pairs is not part of this folder.
-
 <details><summary>Details</summary>
+
+**Donor table.** The `dataset` column has three values: `SU300` (masks derived from expert annotations), `Stanford` and `RSNA` (masks from automated segmentation with TotalSegmentator `cerebral_bleed`). Each donor also has its merged anatomy segmentation, used only for the skull registration.
 
 **Notes.** Use one `--temp_dir` per process if you split the list over several jobs. `generate_ich_counterfactual_masks.py` processes the entries in order and has no per-entry error handling.
 
