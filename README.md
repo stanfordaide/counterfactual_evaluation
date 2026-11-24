@@ -52,24 +52,6 @@ detector marks the embolus.*
 Overall detection rates (95% CI): PE-Detector-1 66.5% (64.2 to 68.8), PE-Detector-2 62.3%
 (59.3 to 65.3), ICH-Detector-1 59.4% (56.9 to 61.9), ICH-Detector-2 71.8% (67.4 to 76.1).
 
-## Reproduce the paper statistics
-
-This needs a CPU and no download. All statistics run from the tables in `resources/`.
-
-```bash
-cd 04_evaluation_and_analysis
-pip install -r requirements.txt
-python patient_bootstrap/text_numbers.py      # detection rates and radiologist results with 95% CIs
-python patient_bootstrap/figure_numbers.py    # values behind Figs. 4, 6b and 7
-python analysis/refit_pe_drivers.py           # PE odds ratios (Fig. 5a)
-python analysis/run_ich_glmm.py               # ICH odds ratios (Fig. 5b)
-python analysis/cohort_descriptives.py        # cohort numbers and Supplementary Table 1
-```
-
-Outputs go to `04_evaluation_and_analysis/output/`. The full list of scripts, with the paper
-item that each one produces, is in
-[`04_evaluation_and_analysis/README.md`](04_evaluation_and_analysis/README.md).
-
 ## Data and models (HuggingFace)
 
 The large files are on HuggingFace: `<HF_URL>` (link to be added).
@@ -91,6 +73,24 @@ What is not in this release, and where to get it:
   [PE-Detector-1](https://github.com/mazurowski-lab/PulmonaryEmbolismSegmentation), [PE-Detector-2](https://github.com/AIinMedicalApplications/APES_ThrombusSegmenter), [ICH-Detector-1](https://github.com/samleoqh/Viola-Unet), [ICH-Detector-2](https://github.com/stanfordaide/ICH_EMM).
 - The raw external datasets (FUMPE, CAD-PE, READ, PhysioNet CT-ICH). They are available from
   their original sources. We release only our detection results on them.
+
+## Reproduce the paper statistics
+
+This needs a CPU and no download. All statistics run from the tables in `resources/`.
+
+```bash
+cd 04_evaluation_and_analysis
+pip install -r requirements.txt
+python patient_bootstrap/text_numbers.py      # detection rates and radiologist results with 95% CIs
+python patient_bootstrap/figure_numbers.py    # values behind Figs. 4, 6b and 7
+python analysis/refit_pe_drivers.py           # PE odds ratios (Fig. 5a)
+python analysis/run_ich_glmm.py               # ICH odds ratios (Fig. 5b)
+python analysis/cohort_descriptives.py        # cohort numbers and Supplementary Table 1
+```
+
+Outputs go to `04_evaluation_and_analysis/output/`. The full list of scripts, with the paper
+item that each one produces, is in
+[`04_evaluation_and_analysis/README.md`](04_evaluation_and_analysis/README.md).
 
 ## Requirements
 
