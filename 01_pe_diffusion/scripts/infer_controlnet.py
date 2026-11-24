@@ -178,26 +178,32 @@ def main():
     os.environ["nnUNet_results"] = os.environ.get("CF_NNUNET_RESULTS", "/path/to/PulmonaryEmbolismSegmentation/dataset/nnUNet_results")
     os.environ["nnUNet_raw"] = os.environ.get("CF_NNUNET_INPUT", "/path/to/inspect2/CTPA_nnunet_input")
     os.environ["nnUNet_preprocessed"] = os.environ.get("CF_NNUNET_INPUT", "/path/to/inspect2/CTPA_nnunet_input")
-    from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
-
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-    pe_predictor = nnUNetPredictor(
-        tile_step_size=0.5,
-        use_mirroring=False,
-        verbose=False,
-        perform_everything_on_device=True,
-        device=device
-    )
-    pe_predictor.initialize_from_trained_model_folder(
-        os.path.join(
-            os.environ["nnUNet_results"],
-            "Dataset256_PE/nnUNetTrainer_500epochs__nnUNetResEncUNetPlans_80G__3d_fullres",
-        ),
-        use_folds="all",
-        checkpoint_name="checkpoint_final.pth",
-    )
-    logger.info("Initialized nnUNet PE segmentation predictor.")
+    # The detector is loaded when the first entry with pe_status = 1 is reached, so entries
+    # with pe_status = 0 can be generated without the detector weights.
+    pe_predictor = None
+
+    def load_pe_predictor():
+        from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
+
+        predictor = nnUNetPredictor(
+            tile_step_size=0.5,
+            use_mirroring=False,
+            verbose=False,
+            perform_everything_on_device=True,
+            device=device
+        )
+        predictor.initialize_from_trained_model_folder(
+            os.path.join(
+                os.environ["nnUNet_results"],
+                "Dataset256_PE/nnUNetTrainer_500epochs__nnUNetResEncUNetPlans_80G__3d_fullres",
+            ),
+            use_folds="all",
+            checkpoint_name="checkpoint_final.pth",
+        )
+        logger.info("Initialized nnUNet PE segmentation predictor.")
+        return predictor
 
     # Step 3: inference
     autoencoder.eval()
@@ -285,6 +291,8 @@ def main():
         # Step 4: run PE segmentation on synthetic image if PE-positive
         pe_status = batch["pe_status"][0].item() if torch.is_tensor(batch["pe_status"][0]) else batch["pe_status"][0]
         if pe_status == 1:
+            if pe_predictor is None:
+                pe_predictor = load_pe_predictor()
             saved_image_name = f"{filename}_pred_{output_postfix}_image.nii.gz"
             saved_image_path = os.path.join(args.output_dir, saved_image_name)
 

@@ -1,0 +1,9 @@
+{"test": [
+  {"image_id": "example_pe",
+   "segmentation": "example_pe_mask.nii.gz",
+   "embedding": "example_pe_mask.nii.gz",
+   "dim": [512, 512, 256],
+   "spacing": [0.5859, 0.5859, 0.9902],
+   "pe_status": 0,
+   "text_prompt": "71 year old female. IMPRESSION: 1. Pulmonary embolus in the right lower lobe pulmonary artery."}
+]}

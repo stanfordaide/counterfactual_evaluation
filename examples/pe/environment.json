@@ -1,0 +1,8 @@
+{
+    "output_dir": "../examples/pe/output",
+    "trained_autoencoder_path": "../weights/models/autoencoder_v1.pt",
+    "trained_diffusion_path": "../weights/pe/diffusion_unet.pt",
+    "trained_controlnet_path": "../weights/pe/controlnet.pt",
+    "data_base_dir": ["../examples/pe"],
+    "json_data_list": ["../examples/pe/datalist.json"]
+}

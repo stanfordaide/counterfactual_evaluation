@@ -6,9 +6,13 @@ __pycache__/
 04_evaluation_and_analysis/output/
 # local data downloads (HuggingFace) and checkpoints
 /data/
+/weights/
+examples/*/output/
 *.pt
 *.nii
 *.nii.gz
+# the open example mask is tracked
+!examples/pe/example_pe_mask.nii.gz
 
 # logs from SLURM launchers
 logs/
