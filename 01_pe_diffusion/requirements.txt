@@ -1,0 +1,26 @@
+# Third-party packages used by the scripts in 01_pe_diffusion.
+# Versions are from the pip freeze of the environment used for the paper.
+# A package without a version was not pinned in that freeze.
+torch==2.6.0
+torchvision==0.21.0
+monai-weekly==1.5.dev2517
+numpy==1.26.4
+nibabel==5.3.2
+scikit-image==0.25.2
+scipy
+pandas
+transformers==4.50.3
+fire==0.7.0
+tqdm
+tensorboard
+wandb
+open-clip-torch
+pillow
+# Needed to load the Flax ClinicalT5 weights (from_flax=True in
+# scripts/train_diff_model_text*.py and scripts/convert_t5.py).
+flax
+jax
+# Not in the freeze. Versions are from the environment of the paper run.
+nnunetv2==2.6.2
+TotalSegmentator==2.13.0
+statsmodels==0.14.6

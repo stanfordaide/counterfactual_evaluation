@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+# analysis outputs are written here; regenerate them with the scripts
+04_evaluation_and_analysis/output/
+# local data downloads (HuggingFace) and checkpoints
+/data/
+*.pt
+*.nii
+*.nii.gz
+
+# logs from SLURM launchers
+logs/
+*.log
+*.out
+*.err

@@ -1,0 +1,48 @@
+{
+    "controlnet_train": {
+        "batch_size": 1,
+        "cache_rate": 0.0,
+        "fold": 0,
+        "lr": 1e-5,
+        "n_epochs": 40,
+        "weighted_loss_label": [121],
+        "weighted_loss": 100
+    },
+    "controlnet_infer": {
+       "num_inference_steps": 30,
+       "autoencoder_sliding_window_infer_size": [80, 80, 80],
+       "autoencoder_sliding_window_infer_overlap": 0.4,
+       "body_region": ["chest"],
+       "anatomy_list": ["body"],
+       "modality": 1
+    },
+    "controlnet_def": {
+        "_target_": "scripts.text_controlnet.TextControlNet",
+        "spatial_dims": 3,
+        "in_channels": 4,
+        "num_channels": [64, 128, 256, 512],
+        "attention_levels": [
+            false,
+            false,
+            true,
+            true
+        ],
+        "num_head_channels": [
+            0,
+            0,
+            32,
+            32
+        ],
+        "num_res_blocks": 2,
+        "use_flash_attention": true,
+        "conditioning_embedding_in_channels": 8,
+        "conditioning_embedding_num_channels": [8, 32, 64],
+        "num_class_embeds": 128,
+        "resblock_updown": true,
+        "include_fc": true,
+        "with_conditioning": true,
+        "cross_attention_dim": 768,
+        "text_projection_def": null
+    },
+    "text_projection_def": null
+}

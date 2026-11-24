@@ -1,0 +1,11 @@
+{
+    "model_dir": "/path/to/inspect2/pe_training_data_all/models/controlnet_best",
+    "output_dir": "/path/to/inspect2/pe_training_data_all/predictions_controlnet/controlnet_text_segmentation_best",
+    "tfevent_path": "./outputs/tfevent",
+    "trained_autoencoder_path": "/path/to/inspect2/pe_training_data/models/autoencoder_epoch273.pt",
+    "trained_diffusion_path": "/path/to/inspect2/pe_training_data_all/models/unet_3d_text_all_l2_loss_best.pt",
+    "trained_controlnet_path": "/path/to/inspect2/pe_training_data_all/models/controlnet_3d_rflow.pt",
+    "exp_name": "controlnet_text_all_seg_mse_best",
+    "data_base_dir": ["/path/to/inspect2/pe_training_data_all/"],
+    "json_data_list": ["/path/to/inspect2/pe_training_data_all/pe_datalist_spacing_all_train_3.json"]
+}

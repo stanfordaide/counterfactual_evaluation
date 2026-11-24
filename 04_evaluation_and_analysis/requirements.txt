@@ -1,0 +1,11 @@
+# Evaluation + statistical-analysis dependencies (CPU; no GPU required).
+# The paper used Python 3.12 with statsmodels 0.14 and SciPy 1.15.
+# Install:  pip install -r requirements.txt
+numpy
+pandas
+scipy
+statsmodels
+scikit-learn
+matplotlib         # only for the plots drawn inside the detection-table pipeline (analysis/run_segmentation_evaluation.py)
+nibabel            # only for the scripts that read NIfTI masks (code-only steps)
+SimpleITK          # only for the external-validation converters (convert_{fumpe,cadpe,read}.py)

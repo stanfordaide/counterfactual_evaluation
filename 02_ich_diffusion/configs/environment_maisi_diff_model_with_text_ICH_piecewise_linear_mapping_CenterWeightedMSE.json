@@ -1,0 +1,11 @@
+{
+    "data_base_dir": "/path/to/head_ct_niis",
+    "embedding_base_dir": "/path/to/embeddings",
+    "json_data_list": "/path/to/ich_datalists/diffusion_train_headct.json",
+    "model_dir": "/path/to/models/diff_unet_3d_rflow_with_text_piecewise_linear_mapping_CenterWeightedMSE",
+    "model_filename": "unet_3d_rflow_with_text_piecewise_linear_mapping_CenterWeightedMSE.pt",
+    "output_dir": "/path/to/outputs/diff_unet_3d_rflow_with_text_piecewise_linear_mapping_CenterWeightedMSE",
+    "output_prefix": "diff_unet_3d_rflow_with_text_piecewise_linear_mapping_CenterWeightedMSE",
+    "trained_autoencoder_path": "/path/to/autoencoder_v1.pt",
+    "existing_ckpt_filepath": "/path/to/models/maisi/diff_unet_3d_rflow.pt"
+}

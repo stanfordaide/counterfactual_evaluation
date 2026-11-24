@@ -1,0 +1,10 @@
+# PE mask pipeline (phases 1-6). CPU only; SLURM is used only to run patients in parallel.
+# Install:  pip install -r requirements.txt
+numpy
+scipy
+pandas
+nibabel
+networkx
+scikit-image
+matplotlib
+tqdm

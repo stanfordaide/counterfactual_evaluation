@@ -1,0 +1,5 @@
+# Packages for 02_ich_diffusion: the environment of 01_pe_diffusion plus sentencepiece.
+# sentencepiece is needed by transformers.T5Tokenizer (version from the pip freeze of the
+# environment used for the paper). TotalSegmentator is already in the 01 file.
+-r ../01_pe_diffusion/requirements.txt
+sentencepiece==0.2.1

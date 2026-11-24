@@ -1,0 +1,36 @@
+# Output directories (contain NIfTI, pickles, CSVs, etc.)
+**/output/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Data files (should never be committed)
+*.nii.gz
+*.pkl
+*.npy
+*.csv
+
+# Images
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+
+# SLURM logs
+slurm_*.out
+slurm_*.err
+*.out
+*.err
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

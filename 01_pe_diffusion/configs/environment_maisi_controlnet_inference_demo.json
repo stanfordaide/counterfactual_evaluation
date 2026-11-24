@@ -1,0 +1,13 @@
+{
+    "model_dir": "/path/to/inspect2/pe_training_data_all/models/controlnet_best_demo_pe_all_v2_clean",
+    "output_dir": "/path/to/inspect2/pe_training_data_all/predictions_controlnet_demo_pe_all_v2_counterfactual_round_4",
+    "tfevent_path": "./outputs_demo_pe_all/tfevent",
+    "trained_autoencoder_path": "/path/to/autoencoder_v1.pt",
+    "trained_diffusion_path": "/path/to/models/pe/diffusion_unet.pt",
+    "trained_controlnet_path": "/path/to/models/pe/controlnet.pt",
+    "exp_name": "controlnet_text_lung_pe_seg_all_v2_counterfactual_round_4",
+    "data_base_dir": ["/path/to/inspect2/pe_training_data_all/"],
+    "json_data_list": ["/path/to/counterfactual_datalist.json"]
+
+}
+

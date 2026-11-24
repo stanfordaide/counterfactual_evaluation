@@ -1,0 +1,11 @@
+{
+    "model_dir": "/path/to/inspect2/pe_training_data_all/models/controlnet_best_demo_pe_all_v2_clean",
+    "output_dir": "/path/to/inspect2/pe_training_data_all/predictions_controlnet_demo_pe_all_v2_clean/controlnet_text_segmentation_pe_all_v2_clean",
+    "tfevent_path": "./outputs_demo_pe_all/tfevent",
+    "trained_autoencoder_path": "/path/to/inspect2/pe_training_data/models/autoencoder_epoch273.pt",
+    "trained_diffusion_path": "/path/to/inspect2/pe_training_data_all/models/unet_3d_text_all_l2_loss_demo_best.pt",
+    "trained_controlnet_path": "/path/to/inspect2/pe_training_data_all/models/controlnet_3d_rflow.pt",
+    "exp_name": "controlnet_text_lung_pe_seg_all_v2_clean",
+    "data_base_dir": ["/path/to/inspect2/pe_training_data_all/"],
+    "json_data_list": ["/path/to/inspect2/pe_training_data_all/pe_datalist_spacing_all_train_with_demo_6_controlnet.json"]
+}

@@ -1,0 +1,11 @@
+{
+    "model_dir": "/path/to/models/controlnet_with_text_ICH_seg_piecewise_linear_mapping_CenterWeightedMSE",
+    "output_dir": "/path/to/outputs/controlnet_with_text_ICH_seg_piecewise_linear_mapping_CenterWeightedMSE",
+    "tfevent_path": "/path/to/tfevent",
+    "trained_autoencoder_path": "/path/to/autoencoder_v1.pt",
+    "trained_diffusion_path": "/path/to/models/ich/diffusion_unet.pt",
+    "trained_controlnet_path": "/path/to/models/maisi/controlnet_3d_rflow.pt",
+    "exp_name": "controlnet_with_text_ICH_seg_piecewise_linear_mapping_CenterWeightedMSE",
+    "data_base_dir": ["/path/to/head_ct_niis"],
+    "json_data_list": ["/path/to/ich_datalists/diffusion_train_headct.json"]
+}

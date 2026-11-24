@@ -1,0 +1,16 @@
+# 3D ResNet-101 (ICH-Detector-2; the ResNet-101 member of the EMM framework, Fang et al. 2025)
+# inference on the 36 PhysioNet ICH-positive real head CTs. Same checkpoint (full_rsna) and
+# preprocessing as the synthetic scores, run through the unmodified ich_emm/inference.py.
+# PhysioNet CT-ICH is not RSNA-derived, so it is an external test for this classifier. The
+# emm_npy/ inputs are (1,X,Y,Z) raw-HU volumes built from the CT NIfTI (build_physionet.py).
+# Replace the /path/to/ placeholders with your local paths.
+model:
+  image_size: 480
+  image_zdim: 30
+  network: "resnet"
+  network_size: 101
+  checkpoint: "/path/to/ich_emm/full_rsna/resnet101/last.ckpt"
+data:
+  image_path: "/path/to/private_data/physionet_ich/emm_npy"
+export:
+  result_path: "/path/to/04_evaluation_and_analysis/output/physionet/physionet_emm.csv"
