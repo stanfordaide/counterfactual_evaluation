@@ -40,6 +40,16 @@ It takes about one minute on one NVIDIA L40 and writes to `../examples/pe/output
 - `example_pe_pred_<time>_image.nii.gz`: the generated CT (512 x 512 x 256 voxels).
 - `example_pe_pred_<time>_label.nii.gz`: the label map on the grid of the CT.
 
+The example mask comes from the TotalSegmentator dataset (CC BY 4.0) with one embolus added in
+the right lower lobe pulmonary artery. The prompt is "71 year old female. IMPRESSION: 1.
+Pulmonary embolus in the right lower lobe pulmonary artery." Source and license:
+[`../examples/README.md`](../examples/).
+
+![PE example: conditioning mask, generated CT, generated CT with the embolus outline](../examples/pe/preview.jpg)
+
+*Left: conditioning mask with the embolus in red. Middle: generated CT. Right: generated CT with
+the outline of the embolus.*
+
 To generate from your own masks, or from the released masks
 (`dataset/pe/conditioning_masks/` on HuggingFace), write a datalist like
 `../examples/pe/datalist.json` and point `json_data_list`, `data_base_dir` and `output_dir`

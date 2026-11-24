@@ -12,87 +12,29 @@ measure how detection models respond.
 from an anatomy mask and a text prompt. (b) Counterfactual masks place a lesion in the anatomy
 of a disease-free scan. (c) The generated scans are used to test detection models.*
 
+## Repository map
+
+| Folder | What it does |
+|---|---|
+| [`01_pe_diffusion/`](01_pe_diffusion/) | PE generator (MAISI ControlNet): training, inference, and the fidelity metrics (FID, CLIPScore). |
+| [`02_ich_diffusion/`](02_ich_diffusion/) | ICH generator (MAISI ControlNet with a brain-window intensity transform): training and inference. |
+| [`03_counterfactual_masks/`](03_counterfactual_masks/) | Conditioning masks. `pe/`: emboli placed in the pulmonary arterial tree on a grid of 16 configurations per patient, and the scoring of the PE detectors against the intended emboli. `ich/`: donor hemorrhages moved into disease-free head anatomy. |
+| [`04_evaluation_and_analysis/`](04_evaluation_and_analysis/) | Detector scoring on the counterfactuals and on external real datasets, and all statistics of the paper. Its README maps each paper result to a script. |
+| [`resources/`](resources/) | Small tables that the analysis reads: cohort, detector outputs, radiologist ratings, external validation results. |
+| [`examples/`](examples/) | An open example input for the PE generator. |
+| [`splits/`](splits/) | INSPECT train and test study identifiers used for the PE generator. |
+
+Order of the pipeline: `03` makes the masks, `01` or `02` generates the CTs, `04` scores the
+detectors and computes the statistics. Each folder has its own README with the commands.
+
 ## Generate scans
 
-Each generator makes a CT from a label map and a text prompt. You need a GPU. Download the
-weights once:
+Each generator makes a CT from a label map and a text prompt on one GPU. The commands and the
+weights are in the folder READMEs:
 
-| Weights | Source | Put them in |
-|---|---|---|
-| Our fine-tuned diffusion U-Net and ControlNet, for PE and for ICH | HuggingFace, `<HF_URL>` (link to be added), folder `models/` | `weights/pe/`, `weights/ich/` |
-| MAISI autoencoder (VAE), not retrained | [`nvidia/NV-Generate-CT`](https://huggingface.co/nvidia/NV-Generate-CT), file `models/autoencoder_v1.pt` | `weights/models/` |
-| ClinicalT5-base text encoder | `luqh/ClinicalT5-base`, converted by the command below | `weights/clinicalt5-pytorch/` |
-
-### Pulmonary embolism (CT pulmonary angiography)
-
-```bash
-cd 01_pe_diffusion
-pip install -r requirements.txt
-export PYTHONPATH=$(pwd):$(pwd)/scripts:$PYTHONPATH
-huggingface-cli download nvidia/NV-Generate-CT models/autoencoder_v1.pt --local-dir ../weights
-export CF_CLINICALT5=$(pwd)/../weights/clinicalt5-pytorch
-python scripts/convert_t5.py                       # once
-python scripts/infer_controlnet.py -g 1 \
-  -e ../examples/pe/environment.json \
-  -t ./configs/config_maisi_controlnet_train.json
-```
-
-The example input is [`examples/pe/example_pe_mask.nii.gz`](examples/): a label map made from
-open data (TotalSegmentator dataset, CC BY 4.0) with one embolus in the right lower lobe
-pulmonary artery, and the prompt "71 year old female. IMPRESSION: 1. Pulmonary embolus in the
-right lower lobe pulmonary artery." The run takes about one minute on one NVIDIA L40. It
-writes the generated CT (`example_pe_pred_<time>_image.nii.gz`, 512 x 512 x 256 voxels) and
-its label map (`..._label.nii.gz`) to `examples/pe/output/`.
-
-![PE example: conditioning mask, generated CT, generated CT with the embolus outline](examples/pe/preview.jpg)
-
-*PE example. Left: conditioning mask with the embolus in red. Middle: generated CT. Right:
-generated CT with the outline of the embolus.*
-
-More options (your own masks, the released masks, several GPUs, the PE detector on the
-output): [`01_pe_diffusion/README.md`](01_pe_diffusion/).
-
-<details><summary>Train</summary>
-
-The PE models were trained on INSPECT, which you can request from its source: [INSPECT dataset
-page](https://aimi.stanford.edu/datasets/inspect-Multimodal-Dataset-for-Pulmonary-Embolism-Diagnosis-and-Prognosis). The steps (VAE latents, label maps, U-Net, ControlNet) are in the "Train"
-block of [`01_pe_diffusion/README.md`](01_pe_diffusion/). The masks for new counterfactuals
-are made in [`03_counterfactual_masks/pe/`](03_counterfactual_masks/pe/).
-
-</details>
-
-### Intracranial hemorrhage (non-contrast head CT)
-
-```bash
-cd 02_ich_diffusion
-pip install -r requirements.txt
-export PYTHONPATH=$(pwd):$(pwd)/scripts:$PYTHONPATH
-export CF_CLINICALT5=$(pwd)/../weights/clinicalt5-pytorch    # made by convert_t5.py in the PE block
-export CF_CLINICALT5_TOKENIZER=luqh/ClinicalT5-base
-python scripts/infer_controlnet_headct_infer_embed_then_decode.py -e <your_environment.json>
-```
-
-The input is a head label map with the hemorrhage added and a short prompt, listed in a
-datalist; the environment file points to the datalist, the weights and an output folder (format
-in [`02_ich_diffusion/README.md`](02_ich_diffusion/)). One scan takes about two minutes on one
-NVIDIA L40. A runnable public ICH example will be added.
-
-![ICH: conditioning mask, generated CT, generated CT with the hemorrhage outline](assets/ich_preview.jpg)
-
-*ICH, generated from one of the released conditioning masks. Left: conditioning mask with the hemorrhage in red. Middle: generated CT. Right:
-generated CT with the outline of the hemorrhage.*
-
-More options: [`02_ich_diffusion/README.md`](02_ich_diffusion/). The source and license of the PE
-example are in [`examples/README.md`](examples/).
-
-<details><summary>Train</summary>
-
-The ICH models were trained on internal head CT studies, which are not public. The steps
-(segmentation, label maps, VAE latents, U-Net, ControlNet) are in the "Train" block of
-[`02_ich_diffusion/README.md`](02_ich_diffusion/). The masks for new counterfactuals are made
-in [`03_counterfactual_masks/ich/`](03_counterfactual_masks/ich/).
-
-</details>
+- Pulmonary embolism (CT pulmonary angiography): [`01_pe_diffusion/`](01_pe_diffusion/), with a
+  runnable example made from open data (about one minute).
+- Intracranial hemorrhage (non-contrast head CT): [`02_ich_diffusion/`](02_ich_diffusion/).
 
 ## What the paper tests
 
@@ -109,21 +51,6 @@ detector marks the embolus.*
 
 Overall detection rates (95% CI): PE-Detector-1 66.5% (64.2 to 68.8), PE-Detector-2 62.3%
 (59.3 to 65.3), ICH-Detector-1 59.4% (56.9 to 61.9), ICH-Detector-2 71.8% (67.4 to 76.1).
-
-## Repository map
-
-| Folder | What it does |
-|---|---|
-| [`01_pe_diffusion/`](01_pe_diffusion/) | PE generator (MAISI ControlNet): training, inference, and the fidelity metrics (FID, CLIPScore). |
-| [`02_ich_diffusion/`](02_ich_diffusion/) | ICH generator (MAISI ControlNet with a brain-window intensity transform): training and inference. |
-| [`03_counterfactual_masks/`](03_counterfactual_masks/) | Conditioning masks. `pe/`: emboli placed in the pulmonary arterial tree on a grid of 16 configurations per patient, and the scoring of the PE detectors against the intended emboli. `ich/`: donor hemorrhages moved into disease-free head anatomy. |
-| [`04_evaluation_and_analysis/`](04_evaluation_and_analysis/) | Detector scoring on the counterfactuals and on external real datasets, and all statistics of the paper. Its README maps each paper result to a script. |
-| [`resources/`](resources/) | Small tables that the analysis reads: cohort, detector outputs, radiologist ratings, external validation results. |
-| [`examples/`](examples/) | One example input per task for the generators. |
-| [`splits/`](splits/) | INSPECT train and test study identifiers used for the PE generator. |
-
-Order of the pipeline: `03` makes the masks, `01` or `02` generates the CTs, `04` scores the
-detectors and computes the statistics. Each folder has its own README with the commands.
 
 ## Reproduce the paper statistics
 

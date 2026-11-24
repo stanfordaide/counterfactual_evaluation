@@ -50,6 +50,12 @@ The models were trained with prompts of the form
 The decoding pass reads every `*_image_embed.nii.gz` file in `<output_dir>/embeddings/`, so use
 a new `output_dir` for each run.
 
+![ICH: conditioning mask, generated CT, generated CT with the hemorrhage outline](../assets/ich_preview.jpg)
+
+*Generated from one of the released conditioning masks. Left: conditioning mask with the hemorrhage
+in red. Middle: generated CT. Right: generated CT with the outline of the hemorrhage. A runnable
+public ICH example will be added.*
+
 The code that de-faces the released head CTs will be added to this repository.
 
 <details><summary>Train</summary>
